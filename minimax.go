@@ -5,7 +5,10 @@
 // moves in a starting position and finding the move associated with the best outcome
 package main
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // Find the best possible outcome evaluation for originalPlayer
 // depth is initially the maximum depth
@@ -42,12 +45,35 @@ func MiniMax(board Board, maximizing bool, originalPlayer Piece, depth uint) flo
 // This version looks at each legal move from the starting position
 // concurrently (runs minimax on each legal move concurrently)
 func ConcurrentFindBestMove(board Board, depth uint) Move {
-	// YOUR CODE HERE
+	return FindBestMove(board, depth)
 }
 
 // Find the best possible move in the current position
 // looking up to depth ahead
 // This is a non-concurrent version that you may want to test first
 func FindBestMove(board Board, depth uint) Move {
-	// YOUR CODE HERE
+	// to hold best move
+	var bestMove Move
+	// find all possible moves
+	posMoves := board.LegalMoves()
+	// keep track of evaluations
+	var evaluations []float32
+
+	// use minimax to find best move
+	for i:= 0; i < len(posMoves); i++ {
+		// add MiniMax evals to evaluations
+		evaluations = append(evaluations, MiniMax(board.MakeMove(posMoves[i]), false, board.Turn(), depth))
+	}
+	fmt.Println(evaluations)
+	// find best eval
+	var best float32 = 0
+	for i := 0; i < len(evaluations); i++ {
+		if evaluations[i] > best {
+			// best so far, change vars accordingly
+			best = evaluations[i]
+			bestMove = posMoves[i]
+		}
+	}
+	// return the best move
+	return bestMove
 }

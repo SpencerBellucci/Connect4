@@ -6,7 +6,10 @@
 
 package main
 
-import "strings"
+import (
+	"fmt"
+	// "strings"
+)
 
 // size of the board
 const numCols uint = 7
@@ -80,23 +83,93 @@ func (board C4Board) Turn() Piece {
 // Returns a copy of the board with the move made.
 // Does not check if the column is full (assumes legal move).
 func (board C4Board) MakeMove(col Move) Board {
-	// YOUR CODE HERE
+	// create copy of old board
+	newBoard := board
+
+	// create new piece, and add to board
+	newPiece := newBoard.turn
+	newBoard.position[col][(numRows - 1) - newBoard.colCount[col]] = newPiece
+
+	// update board info
+	if newBoard.colCount[col] != 5 {
+		newBoard.colCount[col] = newBoard.colCount[col] + 1
+	}
+	newBoard.turn = newBoard.turn.opposite()
+
+	// return the new board
+	return newBoard
 }
 
 // All of the current legal moves.
 // Remember, a move is just the column you can play.
 func (board C4Board) LegalMoves() []Move {
-	// YOUR CODE HERE
+	// slice to store possible moves
+	var moves []Move
+
+	// check for columns that aren't full
+	for i := 0; i < int(numCols); i++ {
+		if board.colCount[i] < numCols {
+			// add column to legal moves
+			moves = append(moves, Move(i))
+		}
+	}
+	return moves
 }
 
 // Is it a win?
 func (board C4Board) IsWin() bool {
-	// YOUR CODE HERE
+	// see how many in a row
+	winBlack := 0
+	winRed := 0
+
+	// iterate through slice
+	for i := 0; i < len(allSegments); i++ {
+		segment := allSegments[i]
+		// check if black win
+		for j := 0; j < len(segment); j++ {
+			// iterate through positions in individual segments
+			currentPiece := board.position[segment[j].col][segment[j].row]
+			if currentPiece == Black {
+				winBlack++
+			}
+		}
+		// check if black has 4 in a row
+		if winBlack == 4 {
+			// it's a win
+			return true
+		}
+		// if not, set black back to 0
+		winBlack = 0
+
+		// check if red win
+		for j := 0; j < len(segment); j++ {
+			// iterate through positions in individual segments
+			currentPiece := board.position[segment[j].col][segment[j].row]
+			if currentPiece == Red {
+				winRed++
+			}
+		}
+		// check if red has 4 in a row
+		if winRed == 4 {
+			// it's a win
+			return true
+		}
+		// if not, set black back to 0
+		winRed = 0
+	}
+	// not a win
+	return false
 }
 
 // Is it a draw?
 func (board C4Board) IsDraw() bool {
-	// YOUR CODE HERE
+	// if it's not a win, and no more moves
+	if !board.IsWin() && len(board.LegalMoves()) == 0 {
+		// it's a draw
+		return true
+	}
+	// not a draw
+	return false
 }
 
 // Who is winning in this position?
@@ -116,12 +189,67 @@ func (board C4Board) IsDraw() bool {
 // You may want to make helper functions/methods like evaluateSegment() and countSegment(), 
 // but it's up to you
 func (board C4Board) Evaluate(player Piece) float32 {
-	// YOUR CODE HERE
+	var playerScore float32 = 0
+	var playerColor Piece
+
+	// determine player color
+	if player == Black {
+		playerColor = Black
+	} else {
+		playerColor = Red
+	}
+
+	// iterate through segments awarding points
+	for i := 0; i < len(allSegments); i++ {
+		segment := allSegments[i]
+
+		sameColor := 0
+		// check if all red
+		for j := 0; j < len(segment); j++ {
+			currentPiece := board.position[segment[j].col][segment[j].row]
+			// if red, add point to red
+			if currentPiece == playerColor{
+				sameColor++
+			} else if currentPiece == playerColor.opposite() {
+				sameColor = 0
+				break
+			}
+		}
+		// award points
+		if sameColor != 0 {
+			switch sameColor {
+			case 1:
+				playerScore = playerScore + 20
+			case 2:
+				playerScore = playerScore + 100
+			case 3:
+				playerScore = playerScore + 500
+			case 4:
+				playerScore = playerScore + 1000
+			}
+		}
+	}
+	return playerScore
 }
 
 // Nice to print board representation
 // This will be used in play.go to print out the state of the position
 // to the user
 func (board C4Board) String() string {
-	// YOUR CODE HERE
+	// string to hold the board string
+	var drawnBoard string
+
+	// print out row nums for user interface
+	fmt.Println("  0   1   2   3   4   5   6")
+	// iterate row by row
+	for i := 0; i < int(numRows); i++ {
+		// iterate through columns
+		for j:= 0; j < int(numCols); j++ {
+			// print what piece is at the current location
+			drawnBoard = drawnBoard + "| " + board.position[j][i].String() + " "
+		}
+		drawnBoard = drawnBoard + "|\n"
+	}
+
+	return drawnBoard
 }

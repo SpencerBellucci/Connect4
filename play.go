@@ -29,6 +29,7 @@ func main() {
 		// Make human move
 		humanMove := getPlayerMove()
 		gameBoard = gameBoard.MakeMove(humanMove)
+
 		if gameBoard.IsWin() {
 			println("Human wins!")
 			break
